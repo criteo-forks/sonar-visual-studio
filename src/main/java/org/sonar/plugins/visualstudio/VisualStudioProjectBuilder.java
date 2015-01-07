@@ -185,17 +185,8 @@ public class VisualStudioProjectBuilder extends ProjectBuilder {
       return;
     }
 
-    if (isWebApplication(project)) {
-      module.setProperty("sonar.cs.fxcop.aspnet", "true");
-    }
-
     module.setProperty("sonar.cs.fxcop.assembly", getAbsolutePath(assembly));
     module.setProperty("sonar.vbnet.fxcop.assembly", getAbsolutePath(assembly));
-  }
-
-  private boolean isWebApplication(VisualStudioProject project) {
-    return project.projectTypeGuids() != null &&
-      project.projectTypeGuids().toUpperCase().contains(WEB_APPLICATION_PROJECT_TYPE_GUID);
   }
 
   private void setReSharperProperties(ProjectDefinition module, String projectName, File solutionFile) {
