@@ -25,7 +25,9 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
+
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.bootstrap.ProjectBuilder;
@@ -74,7 +76,7 @@ public class VisualStudioProjectBuilder extends ProjectBuilder {
       return;
     }
 
-    LOG.info("Using the following Visual Studio solution: " + solutionFile.getAbsolutePath());
+    LOG.info("Using the following Visual Studio solution: " + getAbsolutePath(solutionFile));
 
     if (settings.hasKey(SONAR_MODULES_PROPERTY_KEY)) {
       throw new SonarException("Do not use the Visual Studio bootstrapper and set the \"" + SONAR_MODULES_PROPERTY_KEY + "\" property at the same time.");
@@ -97,7 +99,7 @@ public class VisualStudioProjectBuilder extends ProjectBuilder {
       } else {
         File projectFile = relativePathFile(solutionFile.getParentFile(), solutionProject.path());
         if (!projectFile.isFile()) {
-          LOG.warn("Unable to find the Visual Studio project file " + projectFile.getAbsolutePath());
+          LOG.warn("Unable to find the Visual Studio project file " + getAbsolutePath(projectFile));
         } else {
           VisualStudioProject project = projectParser.parse(projectFile);
           File assembly = assemblyLocator.locateAssembly(solutionProject.name(), projectFile, project);
@@ -141,7 +143,7 @@ public class VisualStudioProjectBuilder extends ProjectBuilder {
     module.setWorkDir(new File(solutionProject.getWorkDir(), solutionProject.getKey().replace(':', '_') + "_" + escapedProjectName));
 
     boolean isTestProject = isTestProject(projectName);
-    LOG.info("Adding the Visual Studio " + (isTestProject ? "test " : "") + "project: " + projectName + "... " + projectFile.getAbsolutePath());
+    LOG.info("Adding the Visual Studio " + (isTestProject ? "test " : "") + "project: " + projectName + "... " + getAbsolutePath(projectFile));
 
     if (isTestProject) {
       module.setTestDirs(projectFile.getParentFile());
@@ -152,12 +154,12 @@ public class VisualStudioProjectBuilder extends ProjectBuilder {
     for (String filePath : project.files()) {
       File file = relativePathFile(projectFile.getParentFile(), filePath);
       if (!file.isFile()) {
-        LOG.warn("Cannot find the file " + file.getAbsolutePath() + " of project " + projectName);
+        LOG.warn("Cannot find the file " + getAbsolutePath(file) + " of project " + projectName);
       } else if (!isInSourceDir(file, projectFile.getParentFile())) {
-        LOG.warn("Skipping the file " + file.getAbsolutePath() + " of project " + projectName + " located outside of the source directory.");
+        LOG.warn("Skipping the file " + getAbsolutePath(file) + " of project " + projectName + " located outside of the source directory.");
       } else {
         if (isTestProject) {
-          module.addTestFiles(file.getAbsolutePath());
+          module.addTestFiles(getAbsolutePath(file));
         } else {
           module.addSourceFiles(file);
         }
@@ -187,8 +189,8 @@ public class VisualStudioProjectBuilder extends ProjectBuilder {
       module.setProperty("sonar.cs.fxcop.aspnet", "true");
     }
 
-    module.setProperty("sonar.cs.fxcop.assembly", assembly.getAbsolutePath());
-    module.setProperty("sonar.vbnet.fxcop.assembly", assembly.getAbsolutePath());
+    module.setProperty("sonar.cs.fxcop.assembly", getAbsolutePath(assembly));
+    module.setProperty("sonar.vbnet.fxcop.assembly", getAbsolutePath(assembly));
   }
 
   private boolean isWebApplication(VisualStudioProject project) {
@@ -197,12 +199,12 @@ public class VisualStudioProjectBuilder extends ProjectBuilder {
   }
 
   private void setReSharperProperties(ProjectDefinition module, String projectName, File solutionFile) {
-    module.setProperty("sonar.resharper.solutionFile", solutionFile.getAbsolutePath());
+    module.setProperty("sonar.resharper.solutionFile", getAbsolutePath(solutionFile));
     module.setProperty("sonar.resharper.projectName", projectName);
   }
 
   private void setStyleCopProperties(ProjectDefinition module, File projectFile) {
-    module.setProperty("sonar.stylecop.projectFilePath", projectFile.getAbsolutePath());
+    module.setProperty("sonar.stylecop.projectFilePath", getAbsolutePath(projectFile));
   }
 
   private static boolean isInSourceDir(File file, File folder) {
@@ -227,7 +229,7 @@ public class VisualStudioProjectBuilder extends ProjectBuilder {
       } else if (solutionFiles.size() == 1) {
         result = solutionFiles.iterator().next();
       } else {
-        throw new SonarException("Found several .sln files in " + projectBaseDir.getAbsolutePath() +
+        throw new SonarException("Found several .sln files in " + getAbsolutePath(projectBaseDir) +
           ". Please set \"" + VisualStudioPlugin.VISUAL_STUDIO_SOLUTION_PROPERTY_KEY + "\" to explicitly tell which one to use.");
       }
     }
@@ -298,4 +300,7 @@ public class VisualStudioProjectBuilder extends ProjectBuilder {
     return ImmutableSet.<String>builder().addAll(Splitter.on(',').omitEmptyStrings().split(skippedProjects)).build();
   }
 
+  private static String getAbsolutePath(File file) {
+    return FilenameUtils.normalize(file.getAbsolutePath()); 
+  }
 }

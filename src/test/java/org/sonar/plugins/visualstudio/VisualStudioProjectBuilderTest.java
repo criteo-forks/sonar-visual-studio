@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.visualstudio;
 
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -103,10 +104,10 @@ public class VisualStudioProjectBuilderTest {
 
     assertThat(libraryProject.getProperties().get("sonar.something")).isEqualTo("foobar");
 
-    assertThat(libraryProject.getProperties().get("sonar.cs.fxcop.assembly")).isEqualTo("c:/MyLibrary.dll");
+    assertThat(libraryProject.getProperties().get("sonar.cs.fxcop.assembly")).isEqualTo(FilenameUtils.normalize("c:/MyLibrary.dll"));
 
-    assertThat(libraryProject.getProperties().get("sonar.cs.fxcop.assembly")).isEqualTo("c:/MyLibrary.dll");
-    assertThat(libraryProject.getProperties().get("sonar.vbnet.fxcop.assembly")).isEqualTo("c:/MyLibrary.dll");
+    assertThat(libraryProject.getProperties().get("sonar.cs.fxcop.assembly")).isEqualTo(FilenameUtils.normalize("c:/MyLibrary.dll"));
+    assertThat(libraryProject.getProperties().get("sonar.vbnet.fxcop.assembly")).isEqualTo(FilenameUtils.normalize("c:/MyLibrary.dll"));
 
     assertThat(libraryProject.getProperties().get("sonar.resharper.solutionFile"))
       .isEqualTo(new File("src/test/resources/VisualStudioProjectBuilderTest/single_sln/solution.sln").getAbsolutePath());
